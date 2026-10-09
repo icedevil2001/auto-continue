@@ -1,0 +1,12 @@
+{
+  "name": "auto-continue",
+  "owner": { "name": "icedevil2001" },
+  "description": "A Claude Code mod that resumes automatically after the 5-hour usage limit resets.",
+  "plugins": [
+    {
+      "name": "auto-continue",
+      "source": "./",
+      "description": "When the 5-hour usage limit is hit, wait for the reset and send \"continue\" automatically."
+    }
+  ]
+}
