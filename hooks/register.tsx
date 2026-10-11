@@ -4,9 +4,16 @@ import type { Register } from 'claude-code'
 const percent = atom({ plugin: 'auto-continue', key: 'percent' } as const, null)
 const isArmed = atom({ plugin: 'auto-continue', key: 'isArmed' } as const, false)
 const resumeAt = atom({ plugin: 'auto-continue', key: 'resumeAt' } as const, null)
+const resetsAt = atom({ plugin: 'auto-continue', key: 'resetsAt' } as const, null)
 
 const clock = (ms: number) =>
   new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+const BAR = 10
+const bar = (pct: number) => {
+  const filled = Math.min(BAR, Math.max(0, Math.round((pct / 100) * BAR)))
+  return '█'.repeat(filled) + '░'.repeat(BAR - filled)
+}
 
 export const register: Register = (on, options) => {
   const threshold = Number(options.threshold)
@@ -48,6 +55,7 @@ export const register: Register = (on, options) => {
   on('session.measure', async ($, e, next) => {
     const w = e.rateLimits.find(l => l.kind === 'five_hour')
     await update($, percent, () => w?.percentUsed ?? null)
+    await update($, resetsAt, () => (w?.resetsAt ? Date.parse(w.resetsAt) : null))
 
     return next(e)
   })
@@ -95,30 +103,35 @@ export const register: Register = (on, options) => {
     const pct = await read($, percent)
     const armed = await read($, isArmed)
     const at = await read($, resumeAt)
+    const reset = await read($, resetsAt)
     const isQuiet = e.props.hasSurvey || (!armed && (pct === null || pct < threshold))
     if (isQuiet) {
       return next(e)
     }
 
     const { Box, Button, Text } = $.ui.resolve(e)
+    const below = await next(e)
 
     return (
-      <Box>
-        <Button
-          key="toggle"
-          label={`Auto-continue: ${armed ? 'ON' : 'OFF'}`}
-          onPress={async () => {
-            if (armed) {
-              stopTimer()
-              await update($, resumeAt, () => null)
-            }
-            await update($, isArmed, () => !armed)
-          }}
-        />
-        <Text dimColor>
-          {' '}
-          {at ? `resumes ~${clock(at)}` : `${pct ?? 0}% of 5h used`}
-        </Text>
+      <Box flexDirection="column">
+        <Box>
+          <Button
+            key="toggle"
+            label={`Auto-continue: ${armed ? 'ON' : 'OFF'}`}
+            onPress={async () => {
+              if (armed) {
+                stopTimer()
+                await update($, resumeAt, () => null)
+              }
+              await update($, isArmed, () => !armed)
+            }}
+          />
+          <Text dimColor>
+            {` ${bar(pct ?? 0)}`}
+            {at ? ` resumes ~${clock(at)}` : reset ? ` resets ${clock(reset)}` : ''}
+          </Text>
+        </Box>
+        {below}
       </Box>
     )
   })

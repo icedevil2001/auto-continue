@@ -49,7 +49,11 @@ test('does nothing while disarmed', async ($, on) => {
 
 const band = { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80 } as never
 const measure = (percentUsed: number) =>
-  ({ context: {}, rateLimits: [{ kind: 'five_hour', percentUsed }], changed: ['rateLimits'] }) as never
+  ({
+    context: {},
+    rateLimits: [{ kind: 'five_hour', percentUsed, resetsAt: new Date(T0 + HOUR).toISOString() }],
+    changed: ['rateLimits'],
+  }) as never
 
 test('the button shows from 25% used, hidden below', async ($, on) => {
   on('session.measure', (_$, e) => ({ changed: e.changed }))
@@ -63,12 +67,16 @@ test('the button shows from 25% used, hidden below', async ($, on) => {
   await $.session.measure(measure(10))
   let ui = await mountBand()
   expect(await ui.find({ key: 'toggle' })).toBeUndefined()
+  expect((await ui.find({ type: 'Text', text: 'engine' }))?.text).toBe('engine')
   await ui.unmount()
 
   await $.session.measure(measure(30))
   ui = await mountBand()
   expect((await ui.find({ key: 'toggle' }))?.text).toMatch(/Auto-continue: OFF/)
+  expect((await ui.find({ type: 'Text', text: /█/ }))?.text).toMatch(/^ ███░░░░░░░ resets \S/)
+  expect((await ui.find({ type: 'Text', text: 'engine' }))?.text).toBe('engine')
   await ui.press({ key: 'toggle' })
   expect((await ui.find({ key: 'toggle' }))?.text).toMatch(/Auto-continue: ON/)
+  expect((await ui.find({ type: 'Text', text: 'engine' }))?.text).toBe('engine')
   await ui.unmount()
 })

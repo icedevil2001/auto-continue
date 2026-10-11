@@ -6,6 +6,7 @@ declare module 'claude-code' {
       percent: number | null
       isArmed: boolean
       resumeAt: Timestamp
+      resetsAt: Timestamp
     }
   }
 }

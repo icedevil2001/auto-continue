@@ -15,7 +15,7 @@ Needs a Claude Code build with mods (tested on 2.1.286). Footprint: reads the en
 
 ## Use
 
-- A button **Auto-continue: ON/OFF** appears above the prompt once the 5-hour window is 25% used (or while armed).
+- A button **Auto-continue: ON/OFF** appears above the prompt once the 5-hour window is 25% used (or while armed), next to a bar of the window used and the time it resets.
 - Or use the slash command: `/auto-continue` (toggle), `/auto-continue on|off|status`.
 - When a turn fails on the limit while armed, a toast shows the resume time; typing your own prompt cancels the pending resume.
 
